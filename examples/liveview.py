@@ -16,6 +16,18 @@ class mpl:
     from matplotlib.figure import Figure
     from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 
+def moving_average(ys, n):
+    kernel = np.ones((n,)) / n
+    return np.convolve(ys, kernel)[(n-1):]
+
+def find_peaks(ys):
+    smoothed = moving_average(ys, 5)
+    baseline = np.mean(smoothed)
+    while True:
+        i = np.argmax(ys)
+        half_max = baseline + (ys[i] - baseline) / 2
+        fwhm = np.count_nonzero(smoothed > half_max)
+
 
 class DynamicPlotter(Gtk.Window):
 
@@ -40,6 +52,7 @@ class DynamicPlotter(Gtk.Window):
         self.ax.grid(True)
         self.canvas = mpl.FigureCanvas(self.figure)
         self.line, = self.ax.plot(self.wl, self.sp[:,0])
+        self.max_line = self.ax.axvline(self.wl[0], c='r')
         # Logging
         self.outfile = outfile
         if self.outfile is not None:
@@ -65,6 +78,12 @@ class DynamicPlotter(Gtk.Window):
 
         # get spectrum
         sp = np.array(self.spectrometer.intensities(raw=self.raw))
+
+        # find peak
+        peak_wl = self.wl[np.argmax(sp)]
+        print '%4.1f' % (peak_wl)
+        if self.max_line is not None:
+            self.max_line.set_xdata([peak_wl, peak_wl])
 
         self.sp[:,self._sample_n] = sp
         self._sample_n += 1
