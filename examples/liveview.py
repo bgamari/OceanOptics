@@ -76,6 +76,9 @@ class DynamicPlotter(Gtk.Window):
         # average!
         sp = np.mean(self.sp, axis=1)
 
+        max_idx = np.argmax(sp)
+        print '%4.1f     %4.1f' % (self.wl[max_idx], sp[max_idx])
+
         if self.smoothing > 1:
             n = self.smoothing
             kernel = np.ones((n,)) / n
